@@ -1,5 +1,9 @@
 experiments/
 samples/
+data/BSD68/
+data/Test12/
+data/Train400/
+data/BSDS500/
 
 
 # Byte-compiled / optimized / DLL files
