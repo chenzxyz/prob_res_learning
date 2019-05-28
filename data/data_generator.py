@@ -80,7 +80,7 @@ def gt_generator(img_dir, data_format, batch_size=128):
     gt_data = np.delete(gt_data, range(discard_n), axis=0)
 
     if gt_data.ndim == 3:
-        gt_data = gt_data.reshape((gt_data.shape[0], gt_data.shape[1], gt_data.shape[2], 1))
+        gt_data = np.expand_dims(gt_data, axis=3)
 
     if data_format == 'NCHW':
         return np.transpose(gt_data, (0, 3, 1, 2))
@@ -90,7 +90,7 @@ def gt_generator(img_dir, data_format, batch_size=128):
 
 def add_noise(batch_x, noise_type, noise_param):
     """
-    Return noisy images and clean images after normalisation
+    Return normalised noisy images and clean images
     :param batch_x:
     :param noise_type:
     :param noise_param:
@@ -127,8 +127,32 @@ def train_generator(img_dir, data_format, every_n_epochs=5, batch_size=128, nois
                 # return normalised batch_y and batch_x
                 yield add_noise(batch_x, noise_type, noise_param)
 
-#
-# # use_img_dir = './BSDS500/val'
-# use_img_dir = './Test12'
-# # data = gt_generator(use_img_dir)
-# data_generator = train_generator(use_img_dir, data_format='NCHW', every_n_epochs=5, batch_size=128, noise_type='poisson', noise_param=1)
+
+def test_data_list(img_dir, data_format, noise_type='poisson', noise_param=1):
+    """
+    Read all images in img_dir and return normalised test data
+    :param img_dir:
+    :param data_format:
+    :param noise_type:
+    :param noise_param:
+    :return:
+    """
+    img_path_list = sorted(glob.glob(os.path.join(img_dir, '*.png')))
+    img_path_list += sorted(glob.glob(os.path.join(img_dir, '*.jpg')))
+    img_path_list += sorted(glob.glob(os.path.join(img_dir, '*.JPEG')))
+
+    clean_imgs = []
+    noisy_imgs = []
+
+    for img_path in img_path_list:
+        img = np.asarray(Image.open(img_path)).astype('float32') / 255.0
+        img = np.expand_dims(img, axis=0)
+        if img.ndim == 3:
+            img = np.expand_dims(img, axis=3)
+        if data_format == 'NCHW':
+            img = np.transpose(img, (0, 3, 1, 2))
+        noisy_img, clean_img = add_noise(img, noise_type, noise_param)
+        noisy_imgs.append(noisy_img)
+        clean_imgs.append(clean_img)
+
+    return noisy_imgs, clean_imgs
