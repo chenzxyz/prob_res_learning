@@ -53,14 +53,14 @@ class DnCNN(snt.AbstractModule):
 
     def __init__(self,
                  num_layers,
-                 num_channels,
+                 output_channels,
                  initializers={'w': he_normal(), 'b': tf.truncated_normal_initializer(stddev=0.001)},
                  regularizers=None,
                  data_format='NCHW',
                  name='dncnn'):
         super(DnCNN, self).__init__(name=name)
         self._num_layers = num_layers
-        self._num_channels = num_channels
+        self._output_channels = output_channels
         self._initializers = initializers
         self._regularizers = regularizers
         self._data_format = data_format
@@ -77,7 +77,7 @@ class DnCNN(snt.AbstractModule):
                               use_batchnorm=True, is_training=is_training, use_nonlinearity=True,
                               data_format=self._data_format, name='dncnn_intermediate_block')
 
-        features = conv_block(features, output_channels=self._num_channels, kernel_shape=3, num_convs=1,
+        features = conv_block(features, output_channels=self._output_channels, kernel_shape=3, num_convs=1,
                               initializers=self._initializers, regularizers=self._regularizers,
                               data_format=self._data_format, name='dncnn_output_block')
 
@@ -169,38 +169,140 @@ class DiagMultiGaussian(snt.AbstractModule):
         return tfd.MultivariateNormalDiag(loc=mu, scale_diag=tf.exp(log_sigma))
 
 
+class Merging(snt.AbstractModule):
+    """Transform samples from low-dimensional space and homo-dimensional features into homo-dimensional samples;
+       Subtract the residual samples from input and get the output samples"""
+
+    def __init__(self,
+                 num_layers,
+                 output_channels,
+                 initializers={'w': tf.orthogonal_initializer(), 'b': tf.truncated_normal_initializer(stddev=0.001)},
+                 regularizers={'w': tf.contrib.layers.l2_regularizer(1.0), 'b': tf.contrib.layers.l2_regularizer(1.0)},
+                 data_format='NCHW',
+                 name='merging'):
+        super(Merging, self).__init__(name=name)
+        self._num_layers = num_layers
+        self._output_channels = output_channels,
+        self._initializers = initializers
+        self._regularizers = regularizers
+        self._data_format = data_format
+
+        if self._data_format == 'NCHW':
+            self._channel_axis = 1
+            self._spatial_axes = [2, 3]
+        else:
+            self._channel_axis = -1
+            self._spatial_axes = [1, 2]
+
+    def _build(self, inputs, homo_dim_features, low_dim_features):
+        shp = tf.shape(homo_dim_features)
+        spatial_shape = [shp[axis] for axis in self._spatial_axes]
+        multiples = [1] + spatial_shape
+        multiples.insert(self._channel_axis, 1)
+
+        if len(low_dim_features.get_shape()) == 2:
+            low_dim_features = tf.expand_dims(low_dim_features, axis=2)
+            low_dim_features = tf.expand_dims(low_dim_features, axis=2)
+
+        broadcast_low_dim_features = tf.tile(low_dim_features, multiples)
+        residual = tf.concat([homo_dim_features, broadcast_low_dim_features], axis=self._channel_axis)
+        residual = conv_block(residual, output_channels=32, kernel_shape=(1,1), num_convs=self._num_layers,
+                              initializers=self._initializers, regularizers=self._regularizers,
+                              use_bias=True, use_nonlinearity=True, data_format=self._data_format)
+        residual = snt.Conv2D(output_channels=self._output_channels, kernel_shape=(1, 1), data_format=self._data_format,
+                              initializers=self._initializers, regularizers=self._regularizers)(residual)
+
+        return tf.math.subtract(inputs, residual, name='output_layer')
 
 
+class PRL(snt.AbstractModule):
+    """A Probabilistic Residual Learning implementation with DnCNN as the deterministic feature net"""
 
+    def __init__(self,
+                 latent_dim,
+                 output_channels,
+                 num_channels,
+                 det_net_depth,
+                 merging_depth,
+                 num_convs_per_block=3,
+                 initializers={'w': he_normal(), 'b': tf.truncated_normal_initializer(stddev=0.001)},
+                 regularizers={'w': tf.contrib.layers.l2_regularizer(1.0), 'b': tf.contrib.layers.l2_regularizer(1.0)},
+                 data_format='NCHW',
+                 name='prob_res_learning'):
+        super(PRL, self).__init__(name=name)
 
+        with self._enter_variable_scope():
+            self._det_net = DnCNN(num_layers=det_net_depth,
+                                  output_channels=output_channels,
+                                  initializers=initializers,
+                                  regularizers=None,
+                                  data_format=data_format,
+                                  name='deterministic_net')
 
+            self._sto_net = DiagMultiGaussian(latent_dim=latent_dim,
+                                              num_channels=num_channels,
+                                              num_convs_per_block=num_convs_per_block,
+                                              initializers=initializers,
+                                              regularizers=regularizers,
+                                              data_format=data_format,
+                                              name='stochastic_net')
 
+            self._ref_net = DiagMultiGaussian(latent_dim=latent_dim,
+                                              num_channels=num_channels,
+                                              num_convs_per_block=num_convs_per_block,
+                                              initializers=initializers,
+                                              regularizers=regularizers,
+                                              data_format=data_format,
+                                              name='reference_net')
 
+            self._merging = Merging(num_layers=merging_depth,
+                                    output_channels=output_channels,
+                                    initializers=initializers,
+                                    regularizers=regularizers,
+                                    data_format=data_format,
+                                    name='merging_net')
 
+    def _build(self, inputs, ground_truth, is_training, is_inference):
+        self._ground_truth = ground_truth
 
+        if not is_inference:
+            self._q = self._ref_net(inputs, ground_truth)
 
+        self._p = self._sto_net(inputs)
+        self._det_features = self._det_net(input, is_training)
 
+    def ref_sample(self, inputs, use_dist_mean=False, z_q=None):
+        """use reference distribution to recover a sample, cannot be used for inference!"""
+        if use_dist_mean:
+            z_q = self._q.loc
+        else:
+            if z_q is None:
+                z_q = self._q.sample()
+        return self._merging(inputs, self._det_features, z_q)
 
+    def sample(self, inputs):
+        """use stochastic net to recover a sample, can be used for inference!"""
+        z_p = self._p.sample()
+        return self._merging(inputs, self._det_features, z_p)
 
+    def kl(self, analytic=True, z_q=None):
+        """evaluate the KL term in the loss function"""
+        if analytic:
+            return tfd.kl_divergence(self._q, self._p)
+        else:
+            if z_q is None:
+                z_q = self._q.sample()
+            log_q = self._q.log_prob(z_q)
+            log_p = self._p.log_prob(z_q)
+            return log_q - log_p
 
+    def loss_mini_batch(self, inputs, ground_truth, beta=0.1, analytic_kl=True, use_ref_mean=False, z_q=None):
+        if z_q is None:
+            z_q = self._q.sample()
 
+        self._kl_val = tf.reduce_mean(self.kl(analytic_kl, z_q))
+        self._ref_z = self.ref_sample(inputs, use_dist_mean=use_ref_mean, z_q=z_q)
+        batch_size = 2 * tf.cast(tf.shape(ground_truth)[0], tf.float32)
+        self._rec_loss = tf.reduce_sum(tf.square(ground_truth - self._rec)) / batch_size
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return self._rec_loss + beta * self._kl_val
