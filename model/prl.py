@@ -232,58 +232,58 @@ class PRL(snt.AbstractModule):
         super(PRL, self).__init__(name=name)
 
         with self._enter_variable_scope():
-            self._det_net = DnCNN(num_layers=det_net_depth,
-                                  output_channels=output_channels,
-                                  initializers=initializers,
-                                  regularizers=None,
-                                  data_format=data_format,
-                                  name='deterministic_net')
+            self._deterministic_net = DnCNN(num_layers=det_net_depth,
+                                            output_channels=output_channels,
+                                            initializers=initializers,
+                                            regularizers=None,
+                                            data_format=data_format,
+                                            name='deterministic_net')
 
-            self._sto_net = DiagMultiGaussian(latent_dim=latent_dim,
-                                              num_channels=num_channels,
-                                              num_convs_per_block=num_convs_per_block,
-                                              initializers=initializers,
-                                              regularizers=regularizers,
-                                              data_format=data_format,
-                                              name='stochastic_net')
+            self._inference_net = DiagMultiGaussian(latent_dim=latent_dim,
+                                                    num_channels=num_channels,
+                                                    num_convs_per_block=num_convs_per_block,
+                                                    initializers=initializers,
+                                                    regularizers=regularizers,
+                                                    data_format=data_format,
+                                                    name='stochastic_net')
 
-            self._ref_net = DiagMultiGaussian(latent_dim=latent_dim,
-                                              num_channels=num_channels,
-                                              num_convs_per_block=num_convs_per_block,
-                                              initializers=initializers,
-                                              regularizers=regularizers,
-                                              data_format=data_format,
-                                              name='reference_net')
+            self._reference_net = DiagMultiGaussian(latent_dim=latent_dim,
+                                                    num_channels=num_channels,
+                                                    num_convs_per_block=num_convs_per_block,
+                                                    initializers=initializers,
+                                                    regularizers=regularizers,
+                                                    data_format=data_format,
+                                                    name='reference_net')
 
-            self._merging = Merging(num_layers=merging_depth,
-                                    output_channels=output_channels,
-                                    initializers=initializers,
-                                    regularizers=regularizers,
-                                    data_format=data_format,
-                                    name='merging_net')
+            self._merging_net = Merging(num_layers=merging_depth,
+                                        output_channels=output_channels,
+                                        initializers=initializers,
+                                        regularizers=regularizers,
+                                        data_format=data_format,
+                                        name='merging_net')
 
     def _build(self, inputs, ground_truth, is_training, is_inference):
         self._ground_truth = ground_truth
 
         if not is_inference:
-            self._q = self._ref_net(inputs, ground_truth)
+            self._q = self._reference_net(inputs, ground_truth)
 
-        self._p = self._sto_net(inputs)
-        self._det_features = self._det_net(input, is_training)
+        self._p = self._inference_net(inputs)
+        self._det_features = self._deterministic_net(input, is_training)
 
-    def ref_sample(self, inputs, use_dist_mean=False, z_q=None):
+    def reference_sample(self, inputs, use_dist_mean=False, z_q=None):
         """use reference distribution to recover a sample, cannot be used for inference!"""
         if use_dist_mean:
             z_q = self._q.loc
         else:
             if z_q is None:
                 z_q = self._q.sample()
-        return self._merging(inputs, self._det_features, z_q)
+        return self._merging_net(inputs, self._det_features, z_q)
 
-    def sample(self, inputs):
+    def inference_sample(self, inputs):
         """use stochastic net to recover a sample, can be used for inference!"""
         z_p = self._p.sample()
-        return self._merging(inputs, self._det_features, z_p)
+        return self._merging_net(inputs, self._det_features, z_p)
 
     def kl(self, analytic=True, z_q=None):
         """evaluate the KL term in the loss function"""
@@ -301,8 +301,8 @@ class PRL(snt.AbstractModule):
             z_q = self._q.sample()
 
         self._kl_val = tf.reduce_mean(self.kl(analytic_kl, z_q))
-        self._ref_z = self.ref_sample(inputs, use_dist_mean=use_ref_mean, z_q=z_q)
+        self._ref_sample = self.reference_sample(inputs, use_dist_mean=use_ref_mean, z_q=z_q)
         batch_size = 2 * tf.cast(tf.shape(ground_truth)[0], tf.float32)
-        self._rec_loss = tf.reduce_sum(tf.square(ground_truth - self._rec)) / batch_size
+        self._rec_loss = tf.reduce_sum(tf.square(ground_truth - self._ref_sample)) / batch_size
 
         return self._rec_loss + beta * self._kl_val

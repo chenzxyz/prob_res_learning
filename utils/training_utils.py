@@ -22,3 +22,12 @@ def he_normal(seed=None):
         https://github.com/tensorflow/tensorflow/blob/r1.9/tensorflow/python/keras/initializers.py
     """
     return VarianceScaling(scale=2., mode='fan_in', distribution='normal', seed=seed)
+
+
+def img_unnorm(img, noise_type, noise_param):
+    if noise_type == 'poisson':
+        return (img + 0.5) * noise_param
+    elif noise_type == 'gaussian':
+        return img * 255
+    else:
+        raise NameError('No such noise type available!')
