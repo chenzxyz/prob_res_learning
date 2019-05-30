@@ -31,3 +31,37 @@ def img_unnorm(img, noise_type, noise_param):
         return img * 255
     else:
         raise NameError('No such noise type available!')
+
+
+def save_sample_img(clean_list, ref_list, inf_list, noise_type, noise_param, colormap, img_path=None):
+    if noise_type == 'poisson':
+        clean_list = (clean_list + 0.5) * noise_param
+    elif noise_type == 'gaussian':
+        clean_list = clean_list * 255
+    else:
+        raise NameError('No such noise type available!')
+
+    list_len = len(clean_list)
+
+    f = plt.figure()
+    gs = gridspec.GridSpec(list_len, 3, wspace=0.0, hspace=0.0)
+
+    for i in range(list_len):
+        ax = plt.subplot(gs[i, 0])
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.imshow(np.squeeze(clean_list[i]), interpolation='nearest', cmap=colormap)
+
+        ax = plt.subplot(gs[i, 1])
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.imshow(np.squeeze(ref_list[i]), interpolation='nearest', cmap=colormap)
+
+        ax = plt.subplot(gs[i, 2])
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.imshow(np.squeeze(inf_list[i]), interpolation='nearest', cmap=colormap)
+
+    if img_path is not None:
+        plt.savefig(img_path, dpi=200, bbox_inches='tight', pad_inches=0.0)
+    plt.close(f)

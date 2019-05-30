@@ -188,7 +188,8 @@ def train(cf):
                                           'epoch_{}_val_samples.png'.format(i//cf.validation['every_n_epochs']))
                 training_utils.save_sample_img(val_data_clean_list, val_ref_img_list, val_inf_img_list,
                                                img_path=image_path,
-                                               noise_type=cf.noise_type, noise_param=cf.noise_param)
+                                               noise_type=cf.noise_type, noise_param=cf.noise_param,
+                                               colormap=cf.colormap)
 
                 val_summary = sess.run(validation_summary_op, feed_dict={val_ref_rec_loss: running_avg_val_ref_rec_loss,
                                                                          val_kl: running_avg_val_kl,
