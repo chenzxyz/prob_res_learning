@@ -19,7 +19,7 @@ def train(cf):
     if cf.use_single_gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = cf.cuda_visible_devices
 
-    train_dataset = train_generator(img_dir=cf.train_dir, data_format=cf.data_format,
+    train_dataset = train_generator(img_dir=cf.training_data_dir, data_format=cf.data_format,
                                     every_n_epochs=cf.every_n_epochs, batch_size=cf.batch_size,
                                     noise_type=cf.noise_type, noise_param=cf.noise_param)
 
@@ -147,14 +147,14 @@ def train(cf):
             [train_data_noisy, train_data_clean] = next(train_dataset)
             _, train_summary = sess.run([optimizer, train_summary_op],
                                         feed_dict={x: train_data_noisy, y: train_data_clean,
-                                                   beta: cf.beta, is_training: True})
+                                                   beta: cf.kl_weight, is_training: True})
             summary_writer.add_summary(train_summary, i)
             sess_time_delta = time.time() - sess_start_time
 
             train_speed = sess.run(timing_summary, feed_dict={batches_per_second: 1. / sess_time_delta})
             summary_writer.add_summary(train_speed, i)
 
-            if i % cf.validation['every_n_epochs'] == 0:
+            if i % cf.val_every_n_batches == 0:
                 running_avg_val_ref_rec_loss = 0.
                 running_avg_val_kl = 0.
                 running_avg_val_inf_mse = 0.
@@ -173,7 +173,7 @@ def train(cf):
                         sess.run([ref_unnormed, inf_unnormed,
                                   ref_rec_loss, kl, inf_avg_mse, inf_avg_ssim, inf_avg_psnr],
                                  feed_dict={x: val_data_noisy_list[j], y: val_data_clean_list[j],
-                                            beta: cf.beta, is_training: False})
+                                            beta: cf.kl_weight, is_training: False})
 
                     running_avg_val_ref_rec_loss += val_ref_rec_loss / num_val_data
                     running_avg_val_kl += val_kl / num_val_data
@@ -185,7 +185,7 @@ def train(cf):
                     val_inf_img_list.append(val_inf_img)
 
                 image_path = os.path.join(cf.experiment_image_dir,
-                                          'epoch_{}_val_samples.png'.format(i//cf.validation['every_n_epochs']))
+                                          'epoch_{}_val_samples.png'.format(i//cf.val_every_n_batches))
                 training_utils.save_sample_img(val_data_clean_list, val_ref_img_list, val_inf_img_list,
                                                img_path=image_path,
                                                noise_type=cf.noise_type, noise_param=cf.noise_param,

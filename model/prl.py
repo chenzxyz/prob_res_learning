@@ -182,7 +182,7 @@ class Merging(snt.AbstractModule):
                  name='merging'):
         super(Merging, self).__init__(name=name)
         self._num_layers = num_layers
-        self._output_channels = output_channels,
+        self._output_channels = output_channels
         self._initializers = initializers
         self._regularizers = regularizers
         self._data_format = data_format
@@ -269,7 +269,7 @@ class PRL(snt.AbstractModule):
             self._q = self._reference_net(inputs, ground_truth)
 
         self._p = self._inference_net(inputs)
-        self._det_features = self._deterministic_net(input, is_training)
+        self._det_features = self._deterministic_net(inputs, is_training)
 
     def reference_sample(self, inputs, use_dist_mean=False, z_q=None):
         """use reference distribution to recover a sample, cannot be used for inference!"""
