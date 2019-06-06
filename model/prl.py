@@ -190,9 +190,11 @@ class Merging(snt.AbstractModule):
         if self._data_format == 'NCHW':
             self._channel_axis = 1
             self._spatial_axes = [2, 3]
+            self._expand_axis = 2
         else:
-            self._channel_axis = -1
+            self._channel_axis = 3
             self._spatial_axes = [1, 2]
+            self._expand_axis = 1
 
     def _build(self, inputs, homo_dim_features, low_dim_features):
         shp = tf.shape(homo_dim_features)
@@ -201,8 +203,8 @@ class Merging(snt.AbstractModule):
         multiples.insert(self._channel_axis, 1)
 
         if len(low_dim_features.get_shape()) == 2:
-            low_dim_features = tf.expand_dims(low_dim_features, axis=2)
-            low_dim_features = tf.expand_dims(low_dim_features, axis=2)
+            low_dim_features = tf.expand_dims(low_dim_features, axis=self._expand_axis)
+            low_dim_features = tf.expand_dims(low_dim_features, axis=self._expand_axis)
 
         broadcast_low_dim_features = tf.tile(low_dim_features, multiples)
         residual = tf.concat([homo_dim_features, broadcast_low_dim_features], axis=self._channel_axis)

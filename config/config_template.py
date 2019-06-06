@@ -12,6 +12,7 @@ time_stamp = datetime.datetime.now().strftime('%m%d_%H%M')
 
 # experiments directory
 experiment_dir = os.path.join(project_dir, 'experiments', time_stamp)
+experiment_image_dir = os.path.join(experiment_dir, 'epoch_imgs')
 
 # samples directory
 sample_dir = os.path.join(project_dir, 'samples', time_stamp)
@@ -50,7 +51,7 @@ disable_progress_bar = False
 #############################################
 #             Data generation               #
 #############################################
-data_format = 'NCHW'
+data_format = 'NHWC'
 every_n_epochs = 1862
 batch_size = 128
 noise_type = 'poisson'
@@ -60,6 +61,11 @@ if noise_type == 'poisson':
     peak_val = noise_param
 elif noise_type == 'gaussian':
     peak_val = 255
+
+if output_channels == 1:
+    colormap = 'gray'
+elif output_channels == 3:
+    colormap = 'rgb'
 #############################################
 #             Network settings              #
 #############################################

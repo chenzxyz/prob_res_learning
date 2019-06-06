@@ -55,10 +55,6 @@ def train(cf):
     reg_loss = cf.regularization_weight * tf.reduce_sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
     loss = model_loss + reg_loss
 
-    update_op = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    with tf.control_dependencies(update_op):
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss, global_step=global_step)
-
     # prepare for summaries
     ref_rec_loss = prl_dncnn._rec_loss
     kl = prl_dncnn._kl_val
@@ -129,6 +125,10 @@ def train(cf):
                                               val_avg_inf_ssim_summary,
                                               val_avg_inf_psnr_summary])
 
+    update_op = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_op):
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss, global_step=global_step)
+
     tf.global_variables_initializer()
 
     saver_hook = tf.train.CheckpointSaverHook(checkpoint_dir=cf.experiment_dir,
@@ -142,7 +142,7 @@ def train(cf):
         logging.info('Model: {}'.format(cf.experiment_dir))
 
         training_start_time = time.time()
-        for i in tqdm(range(cf.n_training_batches), disable=cf.disable_progress_bar):
+        for i in tqdm(range(cf.num_training_batches), disable=cf.disable_progress_bar):
             sess_start_time = time.time()
             [train_data_noisy, train_data_clean] = next(train_dataset)
             _, train_summary = sess.run([optimizer, train_summary_op],
@@ -191,8 +191,8 @@ def train(cf):
                                                noise_type=cf.noise_type, noise_param=cf.noise_param,
                                                colormap=cf.colormap)
 
-                val_summary = sess.run(validation_summary_op, feed_dict={val_ref_rec_loss: running_avg_val_ref_rec_loss,
-                                                                         val_kl: running_avg_val_kl,
+                val_summary = sess.run(validation_summary_op, feed_dict={val_avg_ref_rec_loss: running_avg_val_ref_rec_loss,
+                                                                         val_avg_kl: running_avg_val_kl,
                                                                          val_avg_inf_mse: running_avg_val_inf_mse,
                                                                          val_avg_inf_ssim: running_avg_val_inf_ssim,
                                                                          val_avg_inf_psnr: running_avg_val_inf_psnr})
@@ -200,7 +200,7 @@ def train(cf):
 
                 if cf.disable_progress_bar:
                     logging.info('Evaluating epoch {}/{}: validation loss={}, kl={}' \
-                                 .format(i, cf.n_training_batches, running_avg_val_ref_rec_loss, running_avg_val_kl))
+                                 .format(i, cf.num_training_batches, running_avg_val_ref_rec_loss, running_avg_val_kl))
             sess.run(global_step)
 
         training_time_delta = time.time() - training_start_time
@@ -217,6 +217,9 @@ if __name__ == '__main__':
 
     if not os.path.isdir(cf.experiment_dir):
         os.mkdir(cf.experiment_dir)
+
+    if not os.path.isdir(cf.experiment_image_dir):
+        os.mkdir(cf.experiment_image_dir)
 
     log_path = os.path.join(cf.experiment_dir, 'train.log')
     logging.basicConfig(filename=log_path, level=logging.INFO)
