@@ -17,7 +17,7 @@ def train(cf):
     """Perform training from scratch."""
 
     if cf.use_single_gpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = cf.cuda_visible_devices
+        os.environ['CUDA_VISIBLE_DEVICES'] = cf.cuda_visible_devices
 
     train_dataset = train_generator(img_dir=cf.training_data_dir, data_format=cf.data_format,
                                     every_n_epochs=cf.every_n_epochs, batch_size=cf.batch_size,

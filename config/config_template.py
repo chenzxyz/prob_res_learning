@@ -21,8 +21,10 @@ sample_dir = os.path.join(project_dir, 'samples', time_stamp)
 config_path = os.path.realpath(__file__)
 
 # data
-training_data_dir = os.path.join(project_dir, 'data', 'Train400')
-validation_data_dir = os.path.join(project_dir, 'data', 'Test12')
+training_data_name = 'Train400'
+validation_data_name = 'Test12'
+training_data_dir = os.path.join(project_dir, 'data', training_data_name)
+validation_data_dir = os.path.join(project_dir, 'data', validation_data_name)
 #############################################
 #       Settings on general training        #
 #############################################
@@ -51,7 +53,7 @@ disable_progress_bar = False
 #############################################
 #             Data generation               #
 #############################################
-data_format = 'NCHW'
+data_format = 'NHWC'
 every_n_epochs = 1862
 batch_size = 128
 noise_type = 'poisson'
