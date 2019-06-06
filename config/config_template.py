@@ -51,7 +51,7 @@ disable_progress_bar = False
 #############################################
 #             Data generation               #
 #############################################
-data_format = 'NHWC'
+data_format = 'NCHW'
 every_n_epochs = 1862
 batch_size = 128
 noise_type = 'poisson'

@@ -192,7 +192,7 @@ class Merging(snt.AbstractModule):
             self._spatial_axes = [2, 3]
             self._expand_axis = 2
         else:
-            self._channel_axis = 3
+            self._channel_axis = -1
             self._spatial_axes = [1, 2]
             self._expand_axis = 1
 

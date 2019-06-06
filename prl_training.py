@@ -66,6 +66,11 @@ def train(cf):
     ref_unnormed = training_utils.img_unnorm(ref_sample, cf.noise_type, cf.noise_param)
     inf_unnormed = training_utils.img_unnorm(inf_sample, cf.noise_type, cf.noise_param)
 
+    if cf.data_format == 'NCHW':
+        gt_unnormed = tf.transpose(gt_unnormed, perm=(0, 2, 3, 1))
+        ref_unnormed = tf.transpose(ref_unnormed, perm=(0, 2, 3, 1))
+        inf_unnormed = tf.transpose(inf_unnormed, perm=(0, 2, 3, 1))
+
     # can be used for both training and validation
     # ref_avg_mse = tf.reduce_mean(tf.metrics.mean_squared_error(gt_unnormed, ref_unnormed))
     # ref_avg_ssim = tf.reduce_mean(tf.image.ssim(gt_unnormed, ref_unnormed, max_val=cf.peak_val))
