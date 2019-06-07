@@ -14,9 +14,6 @@ time_stamp = datetime.datetime.now().strftime('%m%d_%H%M')
 experiment_dir = os.path.join(project_dir, 'experiments', time_stamp)
 experiment_image_dir = os.path.join(experiment_dir, 'epoch_imgs')
 
-# samples directory
-sample_dir = os.path.join(project_dir, 'samples', time_stamp)
-
 # configuration path
 config_path = os.path.realpath(__file__)
 

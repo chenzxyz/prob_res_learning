@@ -6,6 +6,7 @@ import os
 import numpy as np
 import time
 import logging
+from tqdm import tqdm
 
 from model.prl import PRL
 import utils.training_utils as training_utils
@@ -18,7 +19,7 @@ def sample(cf, args):
     sample_size = args.sample_size
     time_stamp = args.time_stamp
     ckpt_dir = os.path.join(cf.project_dir, 'experiments', time_stamp)
-    sample_dir = cf.sample_dir
+    sample_dir = os.path.join(cf.project_dir, 'samples', time_stamp)
 
     if not os.path.exists(sample_dir):
         os.mkdir(sample_dir)
@@ -55,7 +56,7 @@ def sample(cf, args):
 
     with tf.Session() as sess:
         saver.restore(sess, tf.train.latest_checkpoint(ckpt_dir))
-        for i in range(num_data):
+        for i in tqdm(range(num_data)):
             restored_samples = []
             sampling_start_time = time.time()
             for j in range(sample_size):
@@ -81,8 +82,13 @@ def sample(cf, args):
 
     val_noisy_path = os.path.join(sample_dir, '{}_val_noisy.npy'.format(cf.validation_data_name))
     val_clean_path = os.path.join(sample_dir, '{}_val_clean.npy'.format(cf.validation_data_name))
-    np.save(val_noisy_path, val_data_noisy_list)
-    np.save(val_clean_path, val_data_clean_list)
+
+    for i in range(len(val_data_noisy_list)):
+        val_data_noisy_list[i] = np.squeeze(val_data_noisy_list[i], axis=0)
+        val_data_clean_list[i] = np.squeeze(val_data_clean_list[i], axis=0)
+
+    np.save(val_noisy_path, np.asarray(val_data_noisy_list))
+    np.save(val_clean_path, np.asarray(val_data_clean_list))
 
 
 if __name__ == '__main__':
@@ -91,7 +97,7 @@ if __name__ == '__main__':
                         help='path of the configuration file of this sampling')
     parser.add_argument('-t', '--time_stamp', type=str, default='0605_1620',
                         help='time stamp for a specified training')
-    parser.add_argument('-s', '--sample_size', type=int, default=100,
+    parser.add_argument('-s', '--sample_size', type=int, default=1000,
                         help='sample size of output images for each input image')
     args = parser.parse_args()
 
