@@ -196,11 +196,12 @@ def train(cf):
                                                noise_type=cf.noise_type, noise_param=cf.noise_param,
                                                colormap=cf.colormap)
 
-                val_summary = sess.run(validation_summary_op, feed_dict={val_avg_ref_rec_loss: running_avg_val_ref_rec_loss,
-                                                                         val_avg_kl: running_avg_val_kl,
-                                                                         val_avg_inf_mse: running_avg_val_inf_mse,
-                                                                         val_avg_inf_ssim: running_avg_val_inf_ssim,
-                                                                         val_avg_inf_psnr: running_avg_val_inf_psnr})
+                val_summary = sess.run(validation_summary_op,
+                                       feed_dict={val_avg_ref_rec_loss: running_avg_val_ref_rec_loss,
+                                                  val_avg_kl: running_avg_val_kl,
+                                                  val_avg_inf_mse: running_avg_val_inf_mse,
+                                                  val_avg_inf_ssim: running_avg_val_inf_ssim,
+                                                  val_avg_inf_psnr: running_avg_val_inf_psnr})
                 summary_writer.add_summary(val_summary, i)
 
                 if cf.disable_progress_bar:
