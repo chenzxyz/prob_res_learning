@@ -99,8 +99,8 @@ if __name__ == '__main__':
                         help='time stamp for a specified training')
     parser.add_argument('-s', '--sample_size', type=int, default=1000,
                         help='sample size of output images for each input image')
-    args = parser.parse_args()
+    sampling_args = parser.parse_args()
 
-    cf = SourceFileLoader('cf', args.config).load_module()
+    sampling_config = SourceFileLoader('cf', sampling_args.config).load_module()
 
-    sample(cf, args)
+    sample(sampling_config, sampling_args)

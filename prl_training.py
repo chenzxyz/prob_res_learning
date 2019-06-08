@@ -219,18 +219,18 @@ if __name__ == '__main__':
                         help='path of the configuration file of this training')
     args = parser.parse_args()
 
-    cf = SourceFileLoader('cf', args.config).load_module()
+    training_config = SourceFileLoader('cf', args.config).load_module()
 
-    if not os.path.isdir(cf.experiment_dir):
-        os.mkdir(cf.experiment_dir)
+    if not os.path.isdir(training_config.experiment_dir):
+        os.mkdir(training_config.experiment_dir)
 
-    if not os.path.isdir(cf.experiment_image_dir):
-        os.mkdir(cf.experiment_image_dir)
+    if not os.path.isdir(training_config.experiment_image_dir):
+        os.mkdir(training_config.experiment_image_dir)
 
-    log_path = os.path.join(cf.experiment_dir, 'train.log')
+    log_path = os.path.join(training_config.experiment_dir, 'train.log')
     logging.basicConfig(filename=log_path, level=logging.INFO)
     logging.getLogger().addHandler(logging.StreamHandler())
     logging.info('Logging to {}'.format(log_path))
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    train(cf)
+    train(training_config)
