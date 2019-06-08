@@ -1,12 +1,12 @@
-import tensorflow as tf
-import numpy as np
 import os
 import time
-from tqdm import tqdm
 import shutil
 import logging
 import argparse
 from importlib.machinery import SourceFileLoader
+
+import tensorflow as tf
+from tqdm import tqdm
 
 from model.prl import PRL
 import utils.training_utils as training_utils
@@ -204,7 +204,7 @@ def train(cf):
                 summary_writer.add_summary(val_summary, i)
 
                 if cf.disable_progress_bar:
-                    logging.info('Evaluating epoch {}/{}: validation loss={}, kl={}' \
+                    logging.info('Evaluating epoch {}/{}: validation loss={}, kl={}'
                                  .format(i, cf.num_training_batches, running_avg_val_ref_rec_loss, running_avg_val_kl))
             sess.run(global_step)
 

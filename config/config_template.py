@@ -50,7 +50,7 @@ disable_progress_bar = False
 #############################################
 #             Data generation               #
 #############################################
-data_format = 'NHWC'
+data_format = 'NCHW'
 every_n_epochs = 1862
 batch_size = 128
 noise_type = 'poisson'
@@ -85,7 +85,7 @@ num_channels = [base_channels, 2*base_channels, 4*base_channels,
                 6*base_channels, 6*base_channels, 6*base_channels, 6*base_channels]
 
 # merging level
-merging_depth=5
+merging_depth=6
 
 
 
