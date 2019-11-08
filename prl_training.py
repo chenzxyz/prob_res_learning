@@ -14,7 +14,7 @@ from data.data_generator import train_generator, test_data_list
 
 
 def train(cf):
-    """Perform training from scratch."""
+    """Perform training of PRL with DnCNN from scratch."""
 
     if cf.use_single_gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = cf.cuda_visible_devices
