@@ -104,12 +104,13 @@ def add_noise(batch_x, noise_type, noise_param):
         raise NameError('No such noise type available!')
 
 
-def train_generator(img_dir, data_format, every_n_epochs=5, batch_size=128, noise_type='poisson', noise_param=1):
+def train_generator(img_dir, data_format,
+                    shuffle_every_n_epochs=5, batch_size=128, noise_type='poisson', noise_param=1):
     """
     Python generator for data batch (y, x)
     :param img_dir:
     :param data_format:
-    :param every_n_epochs: regenerate clean image patches every n epochs
+    :param shuffle_every_n_epochs: regenerate clean image patches every n epochs
     :param batch_size:
     :param noise_type:
     :param noise_param:
@@ -119,7 +120,7 @@ def train_generator(img_dir, data_format, every_n_epochs=5, batch_size=128, nois
         xs = gt_generator(img_dir, data_format, batch_size=batch_size)
         xs = xs.astype('float32') / 255.0
         indices = list(range(xs.shape[0]))
-        for _ in range(every_n_epochs):
+        for _ in range(shuffle_every_n_epochs):
             np.random.shuffle(indices)
             for i in range(0, len(indices), batch_size):
                 # images in the range [0, 1]

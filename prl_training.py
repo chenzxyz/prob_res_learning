@@ -20,7 +20,7 @@ def train(cf):
         os.environ['CUDA_VISIBLE_DEVICES'] = cf.cuda_visible_devices
 
     train_dataset = train_generator(img_dir=cf.training_data_dir, data_format=cf.data_format,
-                                    every_n_epochs=cf.every_n_epochs, batch_size=cf.batch_size,
+                                    shuffle_every_n_epochs=cf.shuffle_every_n_epochs, batch_size=cf.batch_size,
                                     noise_type=cf.noise_type, noise_param=cf.noise_param)
 
     prl_dncnn = PRL(latent_dim=cf.latent_dim,
@@ -159,7 +159,7 @@ def train(cf):
             train_speed = sess.run(timing_summary, feed_dict={batches_per_second: 1. / sess_time_delta})
             summary_writer.add_summary(train_speed, i)
 
-            if i % cf.val_every_n_batches == 0:
+            if i % cf.batches_per_epoch == 0:
                 running_avg_val_ref_rec_loss = 0.
                 running_avg_val_kl = 0.
                 running_avg_val_inf_mse = 0.
@@ -190,7 +190,7 @@ def train(cf):
                     val_inf_img_list.append(val_inf_img)
 
                 image_path = os.path.join(cf.experiment_image_dir,
-                                          'epoch_{}_val_samples.png'.format(i//cf.val_every_n_batches))
+                                          'epoch_{}_val_samples.png'.format(i//cf.batches_per_epoch))
                 training_utils.save_sample_img(val_data_clean_list, val_ref_img_list, val_inf_img_list,
                                                img_path=image_path,
                                                noise_type=cf.noise_type, noise_param=cf.noise_param,

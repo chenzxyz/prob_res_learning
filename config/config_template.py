@@ -33,16 +33,23 @@ cuda_visible_devices = '0'
 regularization_weight = 1e-5
 kl_weight = 0.1
 
-# take 1862 batches as one epoch
-# train for 279300 / 1862 = 150 epochs
+# Settings specifically for training dataset in use ---------
+# Images after augmentation: 238336
+# Batch size: 128
+# Batches per epoch: 238336 / 128 = 1862
+# Train for 279300 / 1862 = 150 epochs
+# lr schedule boundary [30, 60, 80]
+shuffle_every_n_epochs = 5
+batch_size = 128
+batches_per_epoch = 1862
 num_training_batches = 279300
-val_every_n_batches = 1862
 
 learning_rate_schedule = 'piecewise_constant'
 learning_rate_kwargs = {'values': [1e-3, 1e-3/10, 1e-5, 1e-6],
                         'boundaries': [55860, 111720, 148960],
                         'name': 'piecewise_constant_lr_decay'}
 initial_learning_rate = learning_rate_kwargs['values'][0]
+# -----------------------------------------------------------
 
 analytic_kl = True
 use_ref_mean = False
@@ -53,8 +60,7 @@ disable_progress_bar = False
 #             Data generation               #
 #############################################
 data_format = 'NCHW'
-every_n_epochs = 1862
-batch_size = 128
+
 noise_type = 'poisson'
 noise_param = 1
 output_channels = 1
