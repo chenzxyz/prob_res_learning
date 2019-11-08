@@ -27,12 +27,14 @@ validation_data_dir = os.path.join(project_dir, 'data', validation_data_name)
 #############################################
 use_single_gpu = False
 cuda_visible_devices = '0'
-cpu_device = '/cpu:0'
-gpu_device = '/gpu:0'
+# cpu_device = '/cpu:0'
+# gpu_device = '/gpu:0'
 
 regularization_weight = 1e-5
 kl_weight = 0.1
 
+# take 1862 batches as one epoch
+# train for 279300 / 1862 = 150 epochs
 num_training_batches = 279300
 val_every_n_batches = 1862
 
