@@ -5,7 +5,7 @@ import datetime
 #############################################
 
 # project root directory
-project_dir = '/media/chen/Res/Python/prob_res_learning'
+project_dir = 'CHANGE IT TO YOUR PROJECT DIRECTORY'
 
 # timestamp
 time_stamp = datetime.datetime.now().strftime('%m%d_%H%M')

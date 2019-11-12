@@ -99,7 +99,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Sampling of PRL with DnCNN')
     parser.add_argument('-c', '--config', type=str, default='./config/config_template.py',
                         help='path of the configuration file of this sampling')
-    parser.add_argument('-t', '--time_stamp', type=str, default='1108_1614',
+    parser.add_argument('-t', '--time_stamp', type=str, default='CHANGE IT TO A TIME_STAMP OF TRAINING',
                         help='time stamp for a specified training')
     parser.add_argument('-s', '--sample_size', type=int, default=1000,
                         help='sample size of output images for each input image')
