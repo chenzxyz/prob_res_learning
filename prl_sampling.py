@@ -77,15 +77,19 @@ def sample(cf, args):
                                                                                time_stamp,
                                                                                sample_size))
             np.save(save_path, restored_samples)
-            logging.info('{}s used for image {} of  sample size {}, average time: {} s/sample'.format
+            logging.info('{}s used for image {} of sample size {}, average time: {} s/sample'.format
                          (sampling_time_delta, i, sample_size, sampling_time_delta/sample_size))
 
     val_noisy_path = os.path.join(sample_dir, '{}_val_noisy.npy'.format(cf.validation_data_name))
     val_clean_path = os.path.join(sample_dir, '{}_val_clean.npy'.format(cf.validation_data_name))
 
     for i in range(len(val_data_noisy_list)):
-        val_data_noisy_list[i] = np.squeeze(val_data_noisy_list[i], axis=0)
-        val_data_clean_list[i] = np.squeeze(val_data_clean_list[i], axis=0)
+        if cf.data_format == 'NCHW':
+            val_data_noisy_list[i] = np.squeeze(val_data_noisy_list[i], axis=(0, 1))
+            val_data_clean_list[i] = np.squeeze(val_data_clean_list[i], axis=(0, 1))
+        else:
+            val_data_noisy_list[i] = np.squeeze(val_data_noisy_list[i], axis=(0, 3))
+            val_data_clean_list[i] = np.squeeze(val_data_clean_list[i], axis=(0, 3))
 
     np.save(val_noisy_path, np.asarray(val_data_noisy_list))
     np.save(val_clean_path, np.asarray(val_data_clean_list))
@@ -95,7 +99,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Sampling of PRL with DnCNN')
     parser.add_argument('-c', '--config', type=str, default='./config/config_template.py',
                         help='path of the configuration file of this sampling')
-    parser.add_argument('-t', '--time_stamp', type=str, default='0605_1620',
+    parser.add_argument('-t', '--time_stamp', type=str, default='1108_1614',
                         help='time stamp for a specified training')
     parser.add_argument('-s', '--sample_size', type=int, default=1000,
                         help='sample size of output images for each input image')
