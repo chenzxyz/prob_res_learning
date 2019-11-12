@@ -1,8 +1,8 @@
 experiments/
 samples/
 data/BSD68/
-data/Test12/
-data/Train400/
+#data/Test12/
+#data/Train400/
 data/BSDS500/
 temp.py
 test.py
